@@ -14,11 +14,11 @@ Working on a VCF (or BCF, gzipped or not), calculate SNP density in windows. Ver
 
 You have to complile yourself. <a href="https://www.rust-lang.org/tools/install">Download rust</a>, clone this repo, and then run:
 
-cargo build --release
+`cargo build --release`
 
-Compiling may take a couple of minutes. This will then make the compiled binary in the target/release directory.
+Compiling may take a couple of minutes. This will then make the compiled binary in the `target/release` directory.
 
-Run ./target/release/fasta_windows --help to display the help message in the terminal.
+Run `./target/release/fasta_windows` --help to display the help message in the terminal.
 
 ```
 Haplotype windows 0.1.0
