@@ -1,12 +1,16 @@
+// standard library
 use std::fs::{File, create_dir_all};
 use std::io::LineWriter;
 use std::str;
 use std::collections::HashMap;
 use std::io::prelude::*;
 
-use itertools::Itertools;
+// non standard
 use rust_htslib::bcf::{Reader, Read};
 use clap::{App, Arg, value_t};
+
+// my modules
+use haplotype_windows::density::density;
 
 // TODOs
 // add number of substitution types?
@@ -71,23 +75,7 @@ fn main() {
             Err(e) => panic!("Invalid UTF-8 sequence: {}", e),
         };
 
-        if record.rid().unwrap() == curr_rid {
-            // if the current window is less than the position in the genome, increment
-            if (record.pos() as i32) < current_window {
-                let count = window_snp_map.entry(current_window).or_insert(0);
-                *count += 1;
-            } else { // else, increase the size of the window (is this right?)
-                current_window += window_size as i32;
-                // print
-                for key in window_snp_map.keys().sorted() {
-                    writeln!(window_file, "{},{},{}", s, key, window_snp_map[key]).unwrap();
-                }
-                // clear and increment
-                window_snp_map.clear();
-            }
-        } else {
-            curr_rid += 1;
-            current_window = 0;
-        }
+        density::snp_density(s, &record, &mut curr_rid, &mut current_window, window_size, &mut window_snp_map, &mut window_file);
+
     }
 }
