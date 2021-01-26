@@ -7,14 +7,14 @@ pub mod windows {
     use std::io::Write;
     //use rust_htslib::bcf::header::Id;
 
-    pub fn window_calcs<T: std::io::Write>(current_contig: &str, current_record: &rust_htslib::bcf::Record, current_rid: &mut u32, current_window: &mut i32, window_size: usize, file2: &mut LineWriter<T>, alleles: &mut Vec<(Vec<u8>, Vec<u8>)>) { //alleles: &mut Vec<(i32, i32)
+    pub fn window_calcs<T: std::io::Write>(current_contig: &str, current_record: &rust_htslib::bcf::Record, current_rid: &mut u32, current_window: &mut i32, window_size: usize, file2: &mut LineWriter<T>, alleles: &mut Vec<(Vec<u8>, Vec<u8>)>) {
 
         // TODO: deepvariant has this 'RefCall' on the filter, do we ignore these?
         // if we need to deal with this, wrap in: if current_record.has_filter(Id(0)) {...}
             if current_record.rid().unwrap() == *current_rid {
 
-                // watch out, this is hacky.
-                // this code chunk checks whether there is a gap larger than a w
+                // this code chunk checks whether there is a gap between variants which is larger than the window size
+                // if so, fill these gaps with zero records.
                 if (current_record.pos() as i32) - *current_window > window_size as i32 {
                     let x = (current_record.pos() as i32) - *current_window;
                     let iterations = (x as f64 / window_size as f64).ceil() as i32;
@@ -27,7 +27,7 @@ pub mod windows {
                     }
 
                 }
-
+                // collect records up until the current window
                 if (current_record.pos() as i32) <= *current_window {
 
                     // collect the window records
@@ -37,6 +37,7 @@ pub mod windows {
                     // now, alleles is a vector of u8's
                     alleles.push((reference.to_vec(), alternate.to_vec()));
     
+                // at the record which > current window, process the records
                 } else if (current_record.pos() as i32) > *current_window { 
 
                     // variant type
@@ -93,18 +94,17 @@ pub mod windows {
                         writeln!(file2, "{},{},{},{},{},{},{},{}", current_contig, current_window, snps, insertions, deletions, snp_density, transitions, transversions).unwrap_or_else(|_| println!("-]\tError in writing to file."));
                     }
     
-                    // clear and increment
+                    // clear the collections
                     alleles.clear();
-                    // add the alleles of the skipped row... is this right??
+                    // add the alleles of the skipped row... [is this right?]
                     let reference = &current_record.alleles()[0].to_vec();
                     let alternate = &current_record.alleles()[1].to_vec();
-                    // alleles.push((reference.to_vec().len() as i32, alternate.to_vec().len() as i32));
                     alleles.push((reference.to_vec(), alternate.to_vec()));
                     // else, if the position in the genome is greater than the current window, then increase the size of the window
                     *current_window += window_size as i32;
                 }
             } else {
-                // go to the next record!
+                // go to the next record and reset the window
                 *current_rid += 1;
                 *current_window = window_size as i32;
             }
