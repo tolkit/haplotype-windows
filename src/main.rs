@@ -57,7 +57,7 @@ fn main() {
     let window_file_2 = File::create(&output_file_2).unwrap();
     let mut window_file_2 = LineWriter::new(window_file_2);
     // add headers
-    writeln!(window_file_2, "ID,window,no_snps,no_insertions,no_deletions,snp_density").unwrap();
+    writeln!(window_file_2, "ID,window,no_snps,no_insertions,no_deletions,snp_density,transitions,transversions").unwrap();
 
     // the current window, incremented
     let mut current_window: i32 = window_size as i32;
