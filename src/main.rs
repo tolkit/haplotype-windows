@@ -2,7 +2,6 @@
 use std::fs::{File, create_dir_all};
 use std::io::LineWriter;
 use std::str;
-use std::collections::HashMap;
 use std::io::prelude::*;
 
 // non standard
@@ -10,13 +9,11 @@ use rust_htslib::bcf::{Reader, Read};
 use clap::{App, Arg, value_t};
 
 // my modules
-use haplotype_windows::density::density;
+use haplotype_windows::windows::windows;
 
 // TODOs
 // add number of substitution types?
 // e.g. A <> C (transversion), C <> T (transition) etc.
-// types of variants e.g. SNPs/indels...
-// can I convert the window generation to a function?
 
 
 fn main() {
@@ -30,7 +27,7 @@ fn main() {
                  .long("vcf")
                  .takes_value(true)
                  .required(true)
-                 .help("The input vcf (or bcf) file."))
+                 .help("The input vcf (or bcf) file. Gzipped or not."))
         .arg(Arg::with_name("window_size")
                  .short("w")
                  .long("window_size")
@@ -40,7 +37,7 @@ fn main() {
         .arg(Arg::with_name("output")
                  .short("o")
                  .long("output")
-                 .help("Output filename for the CSV (without extension).")
+                 .help("Output filename for the CSVs (without extension).")
                  .takes_value(true)
                  .required(true))
         .get_matches();
@@ -54,28 +51,34 @@ fn main() {
     if let Err(e) = create_dir_all("./hw_out/") {
         println!("[-]\tCreate directory error: {}", e.to_string());   
     }
-    // initiate the output CSV for windows
-    let output_file_1 = format!("./hw_out/{}{}", output, "_windows.csv");
-    let window_file = File::create(&output_file_1).unwrap();
-    let mut window_file = LineWriter::new(window_file);
+
+    // initiate the output CSV for SNP type
+    let output_file_2 = format!("./hw_out/{}{}", output, "_snp_type.csv");
+    let window_file_2 = File::create(&output_file_2).unwrap();
+    let mut window_file_2 = LineWriter::new(window_file_2);
     // add headers
-    writeln!(window_file, "ID,window,SNP_density").unwrap();
+    writeln!(window_file_2, "ID,window,no_snps,no_insertions,no_deletions,snp_density").unwrap();
 
-    let mut window_snp_map: HashMap<i32, i32> = HashMap::new(); // the window and number of SNPs
+    // the current window, incremented
     let mut current_window: i32 = window_size as i32;
+    // i32 representation of the chromosomes to iterate over
     let mut curr_rid = 0;
+    // where we collect the alleles repeatedly in the windows::window_calcs function below
+    let mut window_alleles = Vec::new();
 
-    let mut bcf = Reader::from_path(input_vcf).expect("Error opening file.");
+    // read in the VCF/BCF
+    let mut vcf = Reader::from_path(input_vcf).expect("Error opening file.");
     
-    for record_result in bcf.records() {
+    // iterate over the VCF records
+    for record_result in vcf.records() {
         let record = record_result.expect("Fail to read record");
-        let contig = record.header().rid2name(record.rid().unwrap()).unwrap(); // ... made it hard to get the contig name back out!
+
+        // u8 -> str, so a human can (easily) read the chromosome names
+        let contig = record.header().rid2name(record.rid().unwrap()).unwrap();
         let s = match str::from_utf8(contig) {
             Ok(v) => v,
             Err(e) => panic!("Invalid UTF-8 sequence: {}", e),
         };
-
-        density::snp_density(s, &record, &mut curr_rid, &mut current_window, window_size, &mut window_snp_map, &mut window_file);
-
+        windows::window_calcs(s, &record, &mut curr_rid, &mut current_window, window_size, &mut window_file_2, &mut window_alleles);
     }
 }

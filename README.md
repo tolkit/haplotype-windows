@@ -2,11 +2,12 @@
 
 ## Scope
 
-Working on a VCF (or BCF, gzipped or not), calculate SNP density in windows. Very much in progress.
+Working on a VCF (or BCF, gzipped or not), calculate SNP density in windows. Very much in progress. May be buggy.
+
+I had a really (really) hard time thinking about how to split a VCF into windows (actually non-overlapping chunks), while passing the file only once. My approach definitely needs some quality control, but seems to match up to bedtools (albeit limited testing).
 
 ## TODOs
 
-- Perhaps count types of variant (indels/SNPs)
 - Count transversions/transitions
 - Anything else?
 
@@ -21,7 +22,7 @@ Compiling may take a couple of minutes. This will then make the compiled binary 
 Run `./target/release/fasta_windows` --help to display the help message in the terminal.
 
 ```
-Haplotype windows 0.1.0
+Haplotype windows 0.1.1
 Max Brown <mb39@sanger.ac.uk>
 Haplotype stats in windows on a VCF file.
 
@@ -40,16 +41,17 @@ OPTIONS:
 
 Outputs a CSV:
 
+Currently spits out the numbers of SNPs, insertions, and deletions for free, as well as the total number of variants per window.
+
 ```
-ID,window,SNP_density
-SUPER_1,10000,42
-SUPER_1,20000,32
-SUPER_1,30000,53
-SUPER_1,40000,195
-SUPER_1,50000,245
-SUPER_1,60000,158
-SUPER_1,70000,74
-SUPER_1,80000,225
-SUPER_1,90000,202
-SUPER_1,100000,325
+ID,window,no_snps,no_insertions,no_deletions,snp_density
+SUPER_1,10000,34,3,5,42
+SUPER_1,20000,28,2,3,33
+SUPER_1,30000,51,2,1,54
+SUPER_1,40000,175,9,12,196
+SUPER_1,50000,206,22,18,246
+SUPER_1,60000,131,15,13,159
+SUPER_1,70000,62,7,6,75
+SUPER_1,80000,195,20,11,226
+SUPER_1,90000,176,19,8,203
 ```
