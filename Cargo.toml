@@ -9,5 +9,4 @@ edition = "2018"
 [dependencies]
 # as I don't need CRAM support. Yet...
 rust-htslib = { version = "*", default-features = false }
-itertools = "0.10.0"
 clap = "~2.27.0"

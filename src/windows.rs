@@ -3,8 +3,11 @@ pub mod windows {
     // this module writes to file all the calcualted stats
     // TODO: is there a more elegant way to do this?
 
+    // std modules
     use std::io::LineWriter;
     use std::io::Write;
+    // my modules
+    use crate::var_types::var_types;
 
     pub fn window_calcs<T: std::io::Write>(current_contig: &str, current_record: &rust_htslib::bcf::Record, current_rid: &mut u32, current_window: &mut i32, window_size: usize, file2: &mut LineWriter<T>, alleles: &mut Vec<(Vec<u8>, Vec<u8>)>) {
 
@@ -35,60 +38,15 @@ pub mod windows {
                     alleles.push((reference.to_vec(), alternate.to_vec()));
     
                 // at the record which > current window, process the records
-                } else if (current_record.pos() as i32) > *current_window { 
+                } else if (current_record.pos() as i32) > *current_window {
 
-                    // variant type
-                    let mut snps = 0;
-                    let mut insertions = 0;
-                    let mut deletions = 0;
-                    // transitions / transversions
-                    let mut transitions = 0;
-                    let mut transversions = 0;
-    
-                    for (a, b) in alleles.clone() {
-                        if a.len() != 0 && b.len() != 0 {
-                            if a.len() == b.len() {
-                                snps += 1;
-                            } else if b.len() > a.len() {
-                                deletions += 1;
-                            } else if a.len() > b.len() {
-                                insertions += 1;
-                            }
-                        }
-                        // transitions
-                        // A G
-                        if a == [65] && b == [71] || a == [71] && b == [65] {
-                            transitions += 1;
-                        } else 
-                        // C T
-                        if a == [67] && b == [84] || a == [84] && b == [67] {
-                            transitions += 1;
-                        } else 
-                        // transversions
-                        // A C
-                        if a == [65] && b == [67] || a == [67] && b == [65] {
-                            transversions += 1;
-                        } else
-                        // G T
-                        if a == [71] && b == [84] || a == [84] && b == [71] {
-                            transversions += 1;
-                        } else 
-                        // A T
-                        if a == [65] && b == [84] || a == [84] && b == [65] {
-                            transversions += 1;
-                        } else 
-                        // C G
-                        if a == [67] && b == [71] || a == [71] && b == [67] {
-                            transversions += 1;
-                        }
-                    }
-                    // total number of SNPs
-                    let snp_density = snps + deletions + insertions;
+                    // count the different kinds of variant.
+                    let var_counts = var_types::count_var_types(alleles);
                     
                     if alleles.is_empty() {
                         println!("[-]\tIf this message appears, there are no alleles in the current position of the genome. This is clearly a bug!");
                     } else {
-                        writeln!(file2, "{},{},{},{},{},{},{},{}", current_contig, current_window, snps, insertions, deletions, snp_density, transitions, transversions).unwrap_or_else(|_| println!("-]\tError in writing to file."));
+                        writeln!(file2, "{},{},{},{},{},{},{},{}", current_contig, current_window, var_counts.snps, var_counts.insertions, var_counts.deletions, var_counts.snp_density, var_counts.transitions, var_counts.transversions).unwrap_or_else(|_| println!("-]\tError in writing to file."));
                     }
     
                     // clear the collections

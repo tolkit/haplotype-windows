@@ -12,11 +12,6 @@ use clap::{App, Arg, value_t};
 // my modules
 use haplotype_windows::windows::windows;
 
-// TODOs
-// add number of substitution types?
-// e.g. A <> C (transversion), C <> T (transition) etc.
-
-
 fn main() {
     // command line options
     let matches = App::new("Haplotype windows")
