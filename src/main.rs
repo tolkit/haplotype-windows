@@ -1,13 +1,13 @@
 // standard library
-use std::fs::{File, create_dir_all};
+use std::fs::{create_dir_all, File};
+use std::io::prelude::*;
 use std::io::LineWriter;
 use std::str;
-use std::io::prelude::*;
 
 // non standard
-use rust_htslib::bcf::{Reader, Read};
+use clap::{value_t, App, Arg};
 use rust_htslib::bcf::header::Id;
-use clap::{App, Arg, value_t};
+use rust_htslib::bcf::{Read, Reader};
 
 // my modules
 use haplotype_windows::windows::windows;
@@ -50,10 +50,9 @@ fn main() {
     let window_size = value_t!(matches.value_of("window_size"), usize).unwrap_or_else(|e| e.exit());
     let pass_only = value_t!(matches.value_of("pass_only"), bool).unwrap_or_else(|e| e.exit());
 
-
     // create directory for output
     if let Err(e) = create_dir_all("./hw_out/") {
-        println!("[-]\tCreate directory error: {}", e.to_string());   
+        println!("[-]\tCreate directory error: {}", e.to_string());
     }
 
     // initiate the output CSV for SNP type
@@ -61,7 +60,11 @@ fn main() {
     let window_file_2 = File::create(&output_file_2).unwrap();
     let mut window_file_2 = LineWriter::new(window_file_2);
     // add headers
-    writeln!(window_file_2, "ID,window,no_snps,no_insertions,no_deletions,snp_density,transitions,transversions").unwrap();
+    writeln!(
+        window_file_2,
+        "ID,window,no_snps,no_insertions,no_deletions,snp_density,transitions,transversions"
+    )
+    .unwrap();
 
     // the current window, incremented
     let mut current_window: i32 = window_size as i32;
@@ -72,26 +75,47 @@ fn main() {
 
     // read in the VCF/BCF
     let mut vcf = Reader::from_path(input_vcf).expect("Error opening file.");
-    
     // iterate over the VCF records
     for record_result in vcf.records() {
         let record = record_result.expect("Fail to read record");
 
         // u8 -> str, so a human can (easily) read the chromosome names
-        let contig = record.header().rid2name(record.rid().unwrap()).unwrap();
+        let contig = match record.header().rid2name(match record.rid() {
+            Some(rid) => rid,
+            None => panic!("Record ID not found."),
+        }) {
+            Ok(v) => v,
+            Err(e) => panic!("Invalid name: {}", e),
+        };
+        //.unwrap();
         let s = match str::from_utf8(contig) {
             Ok(v) => v,
             Err(e) => panic!("Invalid UTF-8 sequence: {}", e),
         };
         if pass_only {
             if record.has_filter(Id(0)) {
-                windows::window_calcs(s, &record, &mut curr_rid, &mut current_window, window_size, &mut window_file_2, &mut window_alleles);
+                windows::window_calcs(
+                    s,
+                    &record,
+                    &mut curr_rid,
+                    &mut current_window,
+                    window_size,
+                    &mut window_file_2,
+                    &mut window_alleles,
+                );
             } else {
                 continue;
             }
         } else {
-            windows::window_calcs(s, &record, &mut curr_rid, &mut current_window, window_size, &mut window_file_2, &mut window_alleles);
+            windows::window_calcs(
+                s,
+                &record,
+                &mut curr_rid,
+                &mut current_window,
+                window_size,
+                &mut window_file_2,
+                &mut window_alleles,
+            );
         }
-        
     }
 }
