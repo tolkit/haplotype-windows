@@ -29,14 +29,18 @@ FLAGS:
     -V, --version    Prints version information
 
 OPTIONS:
-    -o, --output <output>              Output filename for the CSV (without extension).
-    -f, --vcf <vcf>                    The input vcf (or bcf) file.
+    -o, --output <output>              Output filename for the CSVs (without extension).
+    -p, --pass_only <pass_only>        Should calculations be output only on records with as PASS filter? Boolean, input
+                                       true or false. [default: true]
+    -f, --vcf <vcf>                    The input vcf (or bcf) file. Gzipped or not.
     -w, --window_size <window_size>    Integer size of window for statistics to be computed over. [default: 10000]
 ```
 
 Outputs a CSV:
 
 Currently spits out the numbers of SNPs, insertions, deletions, transitions, transversions, as well as the total number of variants per window.
+
+e.g. `./target/release/haplotype-windows -f <vcf> -o test -p false`
 
 ```
 ID,window,no_snps,no_insertions,no_deletions,snp_density,transitions,transversions
