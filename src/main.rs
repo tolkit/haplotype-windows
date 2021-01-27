@@ -6,6 +6,7 @@ use std::io::prelude::*;
 
 // non standard
 use rust_htslib::bcf::{Reader, Read};
+use rust_htslib::bcf::header::Id;
 use clap::{App, Arg, value_t};
 
 // my modules
@@ -40,12 +41,20 @@ fn main() {
                  .help("Output filename for the CSVs (without extension).")
                  .takes_value(true)
                  .required(true))
+        .arg(Arg::with_name("pass_only")
+                 .short("p")
+                 .long("pass_only")
+                 .help("Should calculations be output only on records with as PASS filter? Boolean, input true or false.")
+                 .takes_value(true)
+                 .default_value("true"))
         .get_matches();
 
     // parse command line options
     let input_vcf = matches.value_of("vcf").unwrap();
     let output = matches.value_of("output").unwrap();
     let window_size = value_t!(matches.value_of("window_size"), usize).unwrap_or_else(|e| e.exit());
+    let pass_only = value_t!(matches.value_of("pass_only"), bool).unwrap_or_else(|e| e.exit());
+
 
     // create directory for output
     if let Err(e) = create_dir_all("./hw_out/") {
@@ -79,6 +88,15 @@ fn main() {
             Ok(v) => v,
             Err(e) => panic!("Invalid UTF-8 sequence: {}", e),
         };
-        windows::window_calcs(s, &record, &mut curr_rid, &mut current_window, window_size, &mut window_file_2, &mut window_alleles);
+        if pass_only {
+            if record.has_filter(Id(0)) {
+                windows::window_calcs(s, &record, &mut curr_rid, &mut current_window, window_size, &mut window_file_2, &mut window_alleles);
+            } else {
+                continue;
+            }
+        } else {
+            windows::window_calcs(s, &record, &mut curr_rid, &mut current_window, window_size, &mut window_file_2, &mut window_alleles);
+        }
+        
     }
 }

@@ -5,12 +5,9 @@ pub mod windows {
 
     use std::io::LineWriter;
     use std::io::Write;
-    //use rust_htslib::bcf::header::Id;
 
     pub fn window_calcs<T: std::io::Write>(current_contig: &str, current_record: &rust_htslib::bcf::Record, current_rid: &mut u32, current_window: &mut i32, window_size: usize, file2: &mut LineWriter<T>, alleles: &mut Vec<(Vec<u8>, Vec<u8>)>) {
 
-        // TODO: deepvariant has this 'RefCall' on the filter, do we ignore these?
-        // if we need to deal with this, wrap in: if current_record.has_filter(Id(0)) {...}
             if current_record.rid().unwrap() == *current_rid {
 
                 // this code chunk checks whether there is a gap between variants which is larger than the window size
