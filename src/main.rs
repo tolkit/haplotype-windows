@@ -62,9 +62,9 @@ fn main() {
     // add headers
     writeln!(
         window_file_2,
-        "ID,window,no_snps,no_insertions,no_deletions,snp_density,transitions,transversions"
+        "ID,window,no_snps,no_insertions,no_deletions,snp_density,transitions,transversions,mean_indel_length"
     )
-    .unwrap();
+    .unwrap_or_else(|_| println!("[-]\tError in writing to file."));
 
     // the current window, incremented
     let mut current_window: i32 = window_size as i32;
@@ -82,15 +82,15 @@ fn main() {
         // u8 -> str, so a human can (easily) read the chromosome names
         let contig = match record.header().rid2name(match record.rid() {
             Some(rid) => rid,
-            None => panic!("Record ID not found."),
+            None => panic!("[-]\tRecord ID not found."),
         }) {
             Ok(v) => v,
-            Err(e) => panic!("Invalid name: {}", e),
+            Err(e) => panic!("[-]\tInvalid name: {}", e),
         };
         //.unwrap();
         let s = match str::from_utf8(contig) {
             Ok(v) => v,
-            Err(e) => panic!("Invalid UTF-8 sequence: {}", e),
+            Err(e) => panic!("[-]\tInvalid UTF-8 sequence: {}", e),
         };
         if pass_only {
             if record.has_filter(Id(0)) {

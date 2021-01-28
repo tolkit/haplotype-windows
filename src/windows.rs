@@ -29,8 +29,8 @@ pub mod windows {
                     for _it in 0..iterations {
                         writeln!(
                             file2,
-                            "{},{},{},{},{},{},{},{}",
-                            current_contig, current_window, 0, 0, 0, 0, 0, 0
+                            "{},{},{},{},{},{},{},{},{}",
+                            current_contig, current_window, 0, 0, 0, 0, 0, 0, 0
                         )
                         .unwrap_or_else(|_| println!("[-]\tError in writing to file."));
                         *current_window += window_size as i32;
@@ -56,7 +56,7 @@ pub mod windows {
                 } else {
                     writeln!(
                         file2,
-                        "{},{},{},{},{},{},{},{}",
+                        "{},{},{},{},{},{},{},{},{}",
                         current_contig,
                         current_window,
                         var_counts.snps,
@@ -64,9 +64,10 @@ pub mod windows {
                         var_counts.deletions,
                         var_counts.snp_density,
                         var_counts.transitions,
-                        var_counts.transversions
+                        var_counts.transversions,
+                        var_counts.mean_indel_length
                     )
-                    .unwrap_or_else(|_| println!("-]\tError in writing to file."));
+                    .unwrap_or_else(|_| println!("[-]\tError in writing to file."));
                 }
 
                 // clear the collections

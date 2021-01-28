@@ -6,6 +6,16 @@ pub mod var_types {
         pub snp_density: i32,
         pub transitions: i32,
         pub transversions: i32,
+        pub mean_indel_length: f32,
+    }
+
+    fn filter_and_average(numbers: Vec<isize>) -> f32 {
+        let filt_nums: Vec<&isize> = numbers
+            .iter()
+            .filter(|&i| *i > 0isize)
+            .collect::<Vec<&isize>>();
+
+        filt_nums.clone().into_iter().sum::<isize>() as f32 / filt_nums.clone().len() as f32
     }
 
     pub fn count_var_types(alleles: &mut Vec<(Vec<u8>, Vec<u8>)>) -> VarTypes {
@@ -16,9 +26,18 @@ pub mod var_types {
         // transitions / transversions
         let mut transitions = 0;
         let mut transversions = 0;
+        let mut indel_lengths: Vec<isize> = Vec::new();
 
         // iterate over the tuples in 'alleles' (ref, alt)
         for (a, b) in alleles.clone() {
+            // collect a vector of absolute indel lengths
+            // TODO: discuss whether this actually makes sense
+            let ia_len: isize = a.len() as isize;
+            let ib_len: isize = b.len() as isize;
+
+            indel_lengths.push(ia_len.wrapping_sub(ib_len).abs());
+
+            // number of snps, insertions, deletions
             if a.len() != 0 && b.len() != 0 {
                 if a.len() == b.len() {
                     snps += 1;
@@ -28,6 +47,7 @@ pub mod var_types {
                     insertions += 1;
                 }
             }
+            // number of transitions and transversions
             // transitions
             // A G
             if a == [65] && b == [71] || a == [71] && b == [65] {
@@ -57,6 +77,7 @@ pub mod var_types {
         }
         // total number of SNPs
         let snp_density = snps + deletions + insertions;
+        let mean_indel_length = filter_and_average(indel_lengths);
 
         VarTypes {
             snps,
@@ -65,6 +86,7 @@ pub mod var_types {
             snp_density,
             transitions,
             transversions,
+            mean_indel_length,
         }
     }
 }
