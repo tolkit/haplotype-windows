@@ -52,7 +52,8 @@ pub mod windows {
                 let var_counts = var_types::count_var_types(alleles);
 
                 if alleles.is_empty() {
-                    println!("[-]\tIf this message appears, there are no alleles in the current position of the genome. This is clearly a bug!");
+                    // I think these are invariant sites?
+                    println!("[-]\tInvariant site found.");
                 } else {
                     writeln!(
                         file2,
